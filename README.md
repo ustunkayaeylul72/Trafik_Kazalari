@@ -2,16 +2,16 @@
 
 ABD trafik kazası can kaybını simüle eden interaktif web uygulaması. NHTSA FARS (Fatality Analysis Reporting System) 1975–2023 gerçek verilerini temel alır ve kullanıcı kontrolündeki güvenlik faktörleriyle 2024–2035 dönemi için gelecek projeksiyonları oluşturur.
 
-🔗 **Canlı Demo:** [ustunkayaeylul72.github.io/Trafik_Kazalari](https://ustunkayaeylul72.github.io/Trafik_Kazalari/)
+**Canlı Demo:** [ustunkayaeylul72.github.io/Trafik_Kazalari](https://ustunkayaeylul72.github.io/Trafik_Kazalari/)
 
 ## Özellikler
 
-### 🕐 Zamana Bağlı Simülasyon
+### Zamana Bağlı Simülasyon
 - GHG Simulator mantığında yıl-yıl ilerleyen simülasyon (1975 → 2035)
 - Başlat / Durdur / Sıfırla kontrolleri
 - 4 kademeli hız ayarı (×1, ×2, ×4, ×8)
 
-### ⚠ Kontrol Edilebilir Faktörler
+### Kontrol Edilebilir Faktörler
 
 | Faktör | Kaynak | 2023 Gerçek Değer |
 |--------|--------|-------------------|
@@ -24,21 +24,21 @@ ABD trafik kazası can kaybını simüle eden interaktif web uygulaması. NHTSA 
 | VMT Büyüme Hızı | FHWA | +%1.5/yıl |
 | Yol İyileştirme Endeksi | Bileşik | 50/100 |
 
-### 📊 Grafikler
+### Grafikler
 - **Ana grafik:** Yıllık trafik ölümleri (FARS tarihsel + simülasyon)
 - **Oran grafiği:** 100M VMT başına ölüm oranı
 - **Alkol grafiği:** Alkol bağlantılı ölümler
 - **Yaya grafiği:** Yaya + bisikletçi ölümleri
 - **Faktör dağılımı:** Katkı faktörü çubukları
 
-### 📋 Hazır Senaryolar
+### Hazır Senaryolar
 1. **2023 Taban** — NHTSA gerçek değerler
 2. **Vision Zero** — Sıfır ölüm hedefi
 3. **1980 Sarhoş Sürüş** — Tarihsel dönem
 4. **Yüksek Teknoloji** — Gelecek projeksiyonu
 5. **En Kötü Senaryo** — Maksimum risk
 
-### 💾 Dışa Aktarım
+### Dışa Aktarım
 - **CSV:** Tüm simülasyon satırları + faktör girdi değerleri — Python / R / Excel uyumlu
 - **JSON:** Meta bilgi + katsayı açıklamaları + veri dizisi
 
