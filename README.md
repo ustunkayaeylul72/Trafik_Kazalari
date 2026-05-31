@@ -75,5 +75,3 @@ Tüm katsayılar NHTSA ve IIHS yayınlarından türetilmiştir.
 - **Chart.js 4** — İnteraktif grafikler
 - **IBM Plex Sans / Mono** — Tipografi
 - **GitHub Pages** — Barındırma
-
-## Lisans
