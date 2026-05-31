@@ -77,5 +77,3 @@ Tüm katsayılar NHTSA ve IIHS yayınlarından türetilmiştir.
 - **GitHub Pages** — Barındırma
 
 ## Lisans
-
-MIT
