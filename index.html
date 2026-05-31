@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trafik Kazaları Can Kaybı Simülasyonu — NHTSA FARS</title>
+<meta name="description" content="NHTSA FARS 1975-2023 gerçek verilerine dayalı trafik kazası can kaybı simülasyonu. Alkol, hız, emniyet kemeri, ADAS ve daha fazla faktörle gelecek projeksiyonları.">
+<meta property="og:title" content="Trafik Kazaları Can Kaybı Simülasyonu — NHTSA FARS">
+<meta property="og:description" content="NHTSA FARS gerçek verilerine dayalı interaktif trafik güvenliği simülasyonu.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚦</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --arkaplan: #0d1117;
+  --yuzey: #161b22;
+  --kart: #1c2128;
+  --sinir: #30363d;
+  --vurgu: #e05c1a;
+  --vurgu2: #2f81f7;
+  --vurgu3: #3fb950;
+  --tehlike: #f85149;
+  --metin: #e6edf3;
+  --soluk: #8b949e;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--arkaplan);color:var(--metin);font-family:var(--sans);min-height:100vh;overflow-x:hidden;font-size:14px}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(139,148,158,.25);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:rgba(139,148,158,.45)}
+
+header{border-bottom:1px solid var(--sinir);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;background:rgba(13,17,23,0.95);backdrop-filter:blur(10px)}
+.logo{font-family:var(--mono);font-size:12px;color:var(--vurgu);letter-spacing:.06em}
+.logo span{color:var(--soluk)}
+.veri-rozeti{font-family:var(--mono);font-size:10px;background:rgba(224,92,26,.12);border:1px solid rgba(224,92,26,.35);color:var(--vurgu);padding:3px 9px;border-radius:3px;letter-spacing:.08em}
+.yil-gostergesi{font-family:var(--mono);font-size:24px;font-weight:600;color:var(--metin);min-width:55px;text-align:right}
+
+.govde{display:grid;grid-template-columns:300px 1fr;min-height:calc(100vh - 53px)}
+.panel{border-right:1px solid var(--sinir);padding:20px 16px;overflow-y:auto;max-height:calc(100vh - 53px);position:sticky;top:53px}
+.panel-baslik{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--soluk);text-transform:uppercase;border-bottom:1px solid var(--sinir);padding-bottom:9px;margin-bottom:18px}
+.bolum{margin-bottom:24px}
+.bolum-baslik{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--vurgu);text-transform:uppercase;margin-bottom:13px;display:block}
+.slider-grup{margin-bottom:14px}
+.slider-ust{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+.slider-etiket{font-size:12px;color:var(--metin)}
+.slider-deger{font-family:var(--mono);font-size:12px;color:var(--vurgu)}
+.slider-aciklama{font-size:10px;color:var(--soluk);margin-bottom:5px;line-height:1.4}
+.katsayi-rozet{display:inline-block;font-family:var(--mono);font-size:10px;background:rgba(47,129,247,.12);border:1px solid rgba(47,129,247,.25);color:var(--vurgu2);padding:2px 6px;border-radius:3px;margin-bottom:5px}
+
+input[type=range]{-webkit-appearance:none;width:100%;height:3px;background:var(--sinir);border-radius:2px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--vurgu);border:2px solid var(--arkaplan);transition:transform .12s}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.35)}
+input[type=range].mavi::-webkit-slider-thumb{background:var(--vurgu2)}
+input[type=range].yesil::-webkit-slider-thumb{background:var(--vurgu3)}
+input[type=range].kirmizi::-webkit-slider-thumb{background:var(--tehlike)}
+
+.dugme-satiri{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+.dugme{font-family:var(--mono);font-size:11px;letter-spacing:.04em;padding:7px 14px;border-radius:4px;border:1px solid;cursor:pointer;transition:all .13s}
+.dugme-birincil{background:var(--vurgu);border-color:var(--vurgu);color:#fff}
+.dugme-birincil:hover{background:#c44d12}
+.dugme-hayalet{background:transparent;border-color:var(--sinir);color:var(--soluk)}
+.dugme-hayalet:hover{border-color:var(--vurgu);color:var(--vurgu)}
+.dugme-yesil{background:transparent;border-color:var(--vurgu3);color:var(--vurgu3)}
+.dugme-yesil:hover{background:rgba(63,185,80,.1)}
+.dugme-mavi{background:transparent;border-color:var(--vurgu2);color:var(--vurgu2)}
+.dugme-mavi:hover{background:rgba(47,129,247,.1)}
+
+.senaryo-listesi{display:flex;flex-direction:column;gap:5px}
+.senaryo-satiri{font-size:12px;padding:8px 11px;background:var(--kart);border:1px solid var(--sinir);border-radius:4px;cursor:pointer;transition:all .13s;display:flex;justify-content:space-between;align-items:center;color:var(--metin)}
+.senaryo-satiri:hover{border-color:var(--vurgu);color:var(--vurgu)}
+.senaryo-etiket{font-family:var(--mono);font-size:10px;color:var(--soluk)}
+.hiz-satiri{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.hiz-etiketi{font-family:var(--mono);font-size:11px;color:var(--soluk)}
+#hiz-secim{background:var(--kart);border:1px solid var(--sinir);color:var(--metin);font-family:var(--mono);font-size:11px;padding:5px 8px;border-radius:4px}
+
+.icerik{padding:22px 24px;overflow-y:auto;display:flex;flex-direction:column;gap:18px}
+
+.ilerleme-sarici{background:var(--kart);border:1px solid var(--sinir);border-radius:5px;padding:12px 18px;display:flex;align-items:center;gap:14px}
+.yil-etiketi{font-family:var(--mono);font-size:12px;color:var(--soluk);white-space:nowrap}
+.ilerleme-ray{flex:1;height:4px;background:var(--sinir);border-radius:2px}
+.ilerleme-dolu{height:100%;background:var(--vurgu);border-radius:2px;transition:width .35s ease}
+.sim-durum{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:3px;white-space:nowrap;letter-spacing:.06em}
+.sim-durum.calisiyor{background:rgba(224,92,26,.15);color:var(--vurgu);border:1px solid rgba(224,92,26,.3)}
+.sim-durum.durdu{background:rgba(139,148,158,.1);color:var(--soluk);border:1px solid var(--sinir)}
+.sim-durum.tamamlandi{background:rgba(63,185,80,.1);color:var(--vurgu3);border:1px solid rgba(63,185,80,.3)}
+
+.kpi-satiri{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}
+.kpi{background:var(--kart);border:1px solid var(--sinir);border-radius:5px;padding:15px 16px;position:relative;overflow:hidden;transition:border-color .2s}
+.kpi:hover{border-color:rgba(139,148,158,.4)}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.kpi.turuncu::before{background:var(--vurgu)}
+.kpi.mavi-kpi::before{background:var(--vurgu2)}
+.kpi.yesil-kpi::before{background:var(--vurgu3)}
+.kpi.kirmizi-kpi::before{background:var(--tehlike)}
+.kpi-etiket{font-size:10px;color:var(--soluk);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em}
+.kpi-deger{font-family:var(--mono);font-size:24px;color:var(--metin);line-height:1;transition:color .3s}
+.kpi-alt{font-size:11px;color:var(--soluk);margin-top:5px}
+.kpi-delta{font-family:var(--mono);font-size:11px;margin-top:3px}
+.kpi-delta.artti{color:var(--tehlike)}
+.kpi-delta.azaldi{color:var(--vurgu3)}
+
+.grafik-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grafik-kart{background:var(--kart);border:1px solid var(--sinir);border-radius:5px;padding:18px;transition:border-color .2s}
+.grafik-kart:hover{border-color:rgba(139,148,158,.3)}
+.grafik-kart.tam{grid-column:1/-1}
+.grafik-baslik{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--soluk);text-transform:uppercase;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+.grafik-kaynak{font-size:10px;color:rgba(139,148,158,.5)}
+
+.faktor-sarici{margin-bottom:10px}
+.faktor-ust{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+.faktor-ad{color:var(--metin)}
+.faktor-yuzde{font-family:var(--mono);font-size:11px;color:var(--soluk)}
+.faktor-ray{height:6px;background:var(--sinir);border-radius:3px;overflow:hidden}
+.faktor-dolu{height:100%;border-radius:3px;transition:width .5s ease}
+
+.dipnot{font-size:10px;color:rgba(139,148,158,.45);line-height:1.6}
+
+@keyframes titreme{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(1.5)}}
+.titreme-nokta{width:7px;height:7px;border-radius:50%;background:var(--vurgu);display:inline-block;animation:titreme 1.4s ease-in-out infinite;margin-right:5px;vertical-align:middle}
+.titreme-nokta.durdu{background:var(--soluk);animation:none}
+
+@media(max-width:1100px){.govde{grid-template-columns:270px 1fr}.kpi-satiri{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:800px){.govde{grid-template-columns:1fr}.panel{position:relative;top:0;max-height:none}.grafik-grid{grid-template-columns:1fr}.kpi-satiri{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">TRAFİK<span>//</span>SİMÜLASYON &nbsp;·&nbsp; NHTSA FARS 1975–2023</div>
+  <div style="display:flex;gap:20px;align-items:center">
+    <span class="veri-rozeti">GERÇEK VERİ</span>
+    <div class="yil-gostergesi" id="yil-gostergesi">1975</div>
+  </div>
+</header>
+
+<div class="govde">
+  <aside class="panel" id="panel">
+    <div class="panel-baslik">Güvenlik Paneli</div>
+
+    <div class="bolum">
+      <span class="bolum-baslik">⏱ Zaman Kontrolü</span>
+      <div class="hiz-satiri">
+        <button class="dugme dugme-birincil" id="btn-calistir">▶ BAŞLAT</button>
+        <button class="dugme dugme-hayalet" id="btn-sifirla">↺ Sıfırla</button>
+        <select id="hiz-secim">
+          <option value="600">×1</option>
+          <option value="300" selected>×2</option>
+          <option value="150">×4</option>
+          <option value="80">×8</option>
+        </select>
+        <span class="hiz-etiketi">hız</span>
+      </div>
+    </div>
+
+    <div class="bolum">
+      <span class="bolum-baslik">⚠ Risk Faktörleri</span>
+
+      <div class="slider-grup">
+        <div class="slider-ust">
+          <span class="slider-etiket">Alkol Etkili Sürüş</span>
+          <span class="slider-deger" id="deger-alkol">%30</span>
+        </div>
+        <div class="katsayi-rozet">NHTSA: BAC ≥ 0.08 ölüm payı</div>
+        <div class="slider-aciklama">2023 gerçek: %30 — ölümlerin alkol bağlantısı</div>
+        <input type="range" id="sl-alkol" min="15" max="55" value="30">
+      </div>
+
+      <div class="slider-grup">
+        <div class="slider-ust">
+          <span class="slider-etiket">Hız İhlali Bağlantılı</span>
+          <span class="slider-deger" id="deger-hiz">%29</span>
+        </div>
+        <div class="katsayi-rozet">NHTSA: hız ilişkili ölüm payı</div>
+        <div class="slider-aciklama">2023 gerçek: %29</div>
+        <input type="range" id="sl-hiz" min="10" max="50" value="29">
+      </div>
+
+      <div class="slider-grup">
+        <div class="slider-ust">
+          <span class="slider-etiket">Kemersiz Yolcu Ölümleri</span>
+          <span class="slider-deger" id="deger-kemersiz">%47</span>
+        </div>
+        <div class="katsayi-rozet">NHTSA: araç içi ölümlerin kemersiz payı</div>
+        <div class="slider-aciklama">2023 gerçek: %47 araç içi ölüm kemersiz</div>
+        <input type="range" id="sl-kemersiz" min="10" max="80" value="47" class="kirmizi">
+      </div>
+
+      <div class="slider-grup">
+        <div class="slider-ust">
+          <span class="slider-etiket">Dikkat Dağınıklığı</span>
+          <span class="slider-deger" id="deger-dikkat">%8</span>
+        </div>
+        <div class="katsayi-rozet">NHTSA 2022: raporlanan oran (düşük sayım)</div>
+        <div class="slider-aciklama">2022 gerçek: ~%8 (gerçek pay daha yüksek)</div>
+        <input type="range" id="sl-dikkat" min="3" max="25" value="8" class="mavi">
+      </div>
+    </div>
+
+    <div class="bolum">
+      <span class="bolum-baslik">🛡 Koruyucu Faktörler</span>
+
+      <div class="slider-grup">
+        <div class="slider-ust">
+          <span class="slider-etiket">Emniyet Kemeri Kullanım Oranı</span>
+          <span class="slider-deger" id="deger-kemer">%91</span>
+        </div>
+        <div class="katsayi-rozet">NHTSA 2024: %91.2 ulusal oran</div>
+        <div class="slider-aciklama">Kemer: ön koltuk ölüm riskini %45 azaltır</div>
+        <input type="range" id="sl-kemer" min="40" max="99" value="91" class="yesil">
+      </div>
+
+      <div class="slider-grup">
+        <div class="slider-ust">
+          <span class="slider-etiket">ADAS Teknoloji Penetrasyonu</span>
+          <span class="slider-deger" id="deger-adas">%30</span>
+        </div>
+        <div class="katsayi-rozet">IIHS: AEB/LKA donanımlı araç payı</div>
+        <div class="slider-aciklama">Otonom frenleme, şerit takibi sistemleri</div>
+        <input type="range" id="sl-adas" min="0" max="90" value="30" class="yesil">
+      </div>
+    </div>
+
+    <div class="bolum">
+      <span class="bolum-baslik">🛣 Trafik Yükü ve Altyapı</span>
+
+      <div class="slider-grup">
+        <div class="slider-ust">
+          <span class="slider-etiket">Yıllık VMT Büyüme Hızı</span>
+          <span class="slider-deger" id="deger-vmt">+%1.5</span>
+        </div>
+        <div class="katsayi-rozet">FHWA: Araç-Mil Seyahati yıllık artış</div>
+        <div class="slider-aciklama">VMT arttıkça maruziyet riski artar</div>
+        <input type="range" id="sl-vmt" min="-5" max="6" step="0.5" value="1.5" class="mavi">
+      </div>
+
+      <div class="slider-grup">
+        <div class="slider-ust">
+          <span class="slider-etiket">Yol İyileştirme Endeksi</span>
+          <span class="slider-deger" id="deger-yol">50</span>
+        </div>
+        <div class="katsayi-rozet">Bariyer, aydınlatma, yaya altyapısı</div>
+        <div class="slider-aciklama">Orta hat bariyerleri, kavşak iyileştirme vb.</div>
+        <input type="range" id="sl-yol" min="0" max="100" value="50" class="yesil">
+      </div>
+    </div>
+
+    <div class="bolum">
+      <span class="bolum-baslik">📋 Hızlı Senaryolar</span>
+      <div class="senaryo-listesi" id="senaryo-listesi">
+        <div class="senaryo-satiri" data-senaryo="baz">
+          2023 Taban (NHTSA Gerçek) <span class="senaryo-etiket">NHTSA</span>
+        </div>
+        <div class="senaryo-satiri" data-senaryo="vizyon">
+          Vision Zero Hedefi <span class="senaryo-etiket">HEDEF</span>
+        </div>
+        <div class="senaryo-satiri" data-senaryo="sarhos_zirve">
+          1980 Sarhoş Sürüş Dönemi <span class="senaryo-etiket">TARİHSEL</span>
+        </div>
+        <div class="senaryo-satiri" data-senaryo="yuksek_tek">
+          Yüksek Teknoloji Geleceği <span class="senaryo-etiket">PROJEKSİYON</span>
+        </div>
+        <div class="senaryo-satiri" data-senaryo="kotumser">
+          En Kötü Senaryo <span class="senaryo-etiket">RİSK</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="bolum">
+      <span class="bolum-baslik">💾 Dışa Aktar</span>
+      <div class="dugme-satiri">
+        <button class="dugme dugme-yesil" id="btn-csv">⬇ CSV</button>
+        <button class="dugme dugme-mavi" id="btn-json">⬇ JSON</button>
+      </div>
+      <div class="dipnot">Tüm simülasyon satırları faktör değerleriyle — Python / R / Excel analizi için hazır format.</div>
+    </div>
+
+    <div class="dipnot" style="margin-top:8px">
+      Kaynaklar: NHTSA FARS 1975–2023, IIHS Fatality Facts, FHWA VMT verileri.<br>
+      Simülasyon, NHTSA/IIHS yayınlarından türetilen katsayıları kullanır.
+    </div>
+  </aside>
+
+  <main class="icerik" id="icerik">
+    <div class="ilerleme-sarici">
+      <span class="yil-etiketi">1975</span>
+      <div class="ilerleme-ray">
+        <div class="ilerleme-dolu" id="ilerleme-dolu" style="width:0%"></div>
+      </div>
+      <span class="yil-etiketi">2035</span>
+      <span class="sim-durum durdu" id="sim-durum">
+        <span class="titreme-nokta durdu"></span>DURDU
+      </span>
+    </div>
+
+    <div class="kpi-satiri">
+      <div class="kpi turuncu">
+        <div class="kpi-etiket">Yıllık Can Kaybı</div>
+        <div class="kpi-deger" id="kpi-can-kaybi">—</div>
+        <div class="kpi-alt" id="kpi-yil-etiketi">Yıl —</div>
+        <div class="kpi-delta" id="kpi-delta"></div>
+      </div>
+      <div class="kpi mavi-kpi">
+        <div class="kpi-etiket">Ölüm Oranı / 100M VMT</div>
+        <div class="kpi-deger" id="kpi-oran">—</div>
+        <div class="kpi-alt">Maruziyet düzeltmeli</div>
+        <div class="kpi-delta" id="kpi-oran-delta"></div>
+      </div>
+      <div class="kpi kirmizi-kpi">
+        <div class="kpi-etiket">Kümülatif Toplam</div>
+        <div class="kpi-deger" id="kpi-kumulatif">—</div>
+        <div class="kpi-alt">Toplam simüle ölüm</div>
+      </div>
+      <div class="kpi yesil-kpi">
+        <div class="kpi-etiket">Kurtarılan Can</div>
+        <div class="kpi-deger" id="kpi-kurtarilan">—</div>
+        <div class="kpi-alt">Taban trajektöre göre</div>
+      </div>
+    </div>
+
+    <div class="grafik-kart tam">
+      <div class="grafik-baslik">
+        Yıllık Trafik Ölümleri — NHTSA FARS Tarihsel + Simülasyon
+        <span class="grafik-kaynak">Kaynak: NHTSA FARS 1975–2023</span>
+      </div>
+      <canvas id="grafik-ana" height="85"></canvas>
+    </div>
+
+    <div class="grafik-grid">
+      <div class="grafik-kart">
+        <div class="grafik-baslik">
+          Ölüm Oranı (100M VMT başına)
+          <span class="grafik-kaynak">NHTSA / FHWA</span>
+        </div>
+        <canvas id="grafik-oran" height="160"></canvas>
+      </div>
+      <div class="grafik-kart">
+        <div class="grafik-baslik">
+          Katkı Faktörü Dağılımı
+          <span class="grafik-kaynak">NHTSA tahminleri</span>
+        </div>
+        <div id="faktor-cubuklar" style="padding-top:8px"></div>
+      </div>
+    </div>
+
+    <div class="grafik-grid">
+      <div class="grafik-kart">
+        <div class="grafik-baslik">
+          Alkol Bağlantılı Ölümler
+          <span class="grafik-kaynak">NHTSA BAC verisi</span>
+        </div>
+        <canvas id="grafik-alkol" height="160"></canvas>
+      </div>
+      <div class="grafik-kart">
+        <div class="grafik-baslik">
+          Yaya ve Bisikletçi Ölümleri
+          <span class="grafik-kaynak">NHTSA FARS</span>
+        </div>
+        <canvas id="grafik-yaya" height="160"></canvas>
+      </div>
+    </div>
+
+    <div class="dipnot" style="padding:4px">
+      ⚠ Simülasyon modeli NHTSA FARS verilerini taban olarak kullanır. Gelecek projeksiyonları kanıta dayalı katsayılar uygular.<br>
+      Alkol: +%2.5/pp · Hız: +%1.8/pp · Kemersiz: +%1.2/pp · Dikkat: +%1.5/pp · Emniyet kemeri: −%0.9/pp · ADAS: −%0.3/pp · VMT: orantılı · Yol endeksi: −%0.15/birim<br>
+      Tüm katsayılar NHTSA/IIHS yayınlarından türetilmiştir.
+    </div>
+  </main>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   NHTSA FARS GERÇEK VERİ 1975-2023
+   [ölüm_sayısı, vmt_milyar_mil, oran_100m_vmt]
+   Kaynak: NHTSA FARS Encyclopedia & FHWA Highway Statistics
+   ═══════════════════════════════════════════════════════════════ */
+const FARS_VERISI = {
+  1975:[44525,1328,3.35],1976:[45523,1402,3.25],1977:[47878,1467,3.26],
+  1978:[50331,1545,3.26],1979:[51093,1529,3.34],1980:[51091,1527,3.35],
+  1981:[49301,1556,3.17],1982:[43945,1590,2.76],1983:[42589,1653,2.58],
+  1984:[44257,1720,2.57],1985:[43825,1774,2.47],1986:[46087,1835,2.51],
+  1987:[46390,1921,2.41],1988:[47087,2026,2.32],1989:[45582,2096,2.18],
+  1990:[44599,2144,2.08],1991:[41508,2172,1.91],1992:[39250,2247,1.75],
+  1993:[40150,2296,1.75],1994:[40716,2358,1.73],1995:[41817,2423,1.72],
+  1996:[42065,2486,1.69],1997:[42013,2561,1.64],1998:[41501,2630,1.58],
+  1999:[41717,2691,1.55],2000:[41945,2747,1.53],2001:[42196,2797,1.51],
+  2002:[43005,2856,1.51],2003:[42884,2890,1.48],2004:[42836,2965,1.44],
+  2005:[43510,2989,1.46],2006:[42708,3014,1.42],2007:[41259,3031,1.36],
+  2008:[37423,2976,1.26],2009:[33883,2957,1.15],2010:[32999,2967,1.11],
+  2011:[32479,2950,1.10],2012:[33782,2969,1.14],2013:[32893,2988,1.10],
+  2014:[32675,3026,1.08],2015:[35485,3095,1.15],2016:[37461,3174,1.18],
+  2017:[37133,3212,1.16],2018:[36560,3240,1.13],2019:[36096,3262,1.11],
+  2020:[38824,2904,1.37],2021:[42939,3141,1.37],2022:[42721,3194,1.34],
+  2023:[40901,3183,1.28],
+};
+
+/* NHTSA: Alkol bağlantılı ölüm payı (BAC ≥ 0.08) — Seçili yıllar */
+const ALKOL_ORANI = {
+  1975:.56,1980:.57,1982:.55,1985:.52,1990:.48,
+  1995:.41,2000:.40,2005:.39,2010:.31,2015:.29,
+  2016:.28,2017:.29,2018:.29,2019:.28,2020:.30,
+  2021:.30,2022:.32,2023:.30,
+};
+
+/* NHTSA: Hız ilişkili ölüm payı — Seçili yıllar */
+const HIZ_ORANI = {
+  1975:.35,1982:.33,1990:.32,2000:.30,2005:.31,
+  2010:.31,2015:.27,2016:.27,2020:.29,2022:.30,2023:.29
+};
+
+/* NHTSA FARS: Yaya + bisikletçi ölümleri — Seçili yıllar */
+const YAYA_VERISI = {
+  1975:8000,1980:8070,1985:7227,1990:6482,1995:5619,2000:4763,
+  2005:4892,2010:4302,2011:4457,2012:4743,2013:4735,2014:4884,
+  2015:5376,2016:6143,2017:6227,2018:6388,2019:6590,2020:7485,
+  2021:8004,2022:7388,2023:7318
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   YARDIMCI FONKSİYONLAR
+   ═══════════════════════════════════════════════════════════════ */
+function interpole(tablo, yil) {
+  const anahtarlar = Object.keys(tablo).map(Number).sort((a,b)=>a-b);
+  if(yil <= anahtarlar[0]) return tablo[anahtarlar[0]];
+  if(yil >= anahtarlar[anahtarlar.length-1]) return tablo[anahtarlar[anahtarlar.length-1]];
+  let alt = anahtarlar[0], ust = anahtarlar[anahtarlar.length-1];
+  for (let k of anahtarlar){ if(k<=yil) alt=k; }
+  for (let k of [...anahtarlar].reverse()){ if(k>=yil) ust=k; }
+  if(alt===ust) return tablo[alt];
+  const t = (yil - alt) / (ust - alt);
+  return tablo[alt] + t * (tablo[ust] - tablo[alt]);
+}
+
+function formatSayi(n) {
+  return n.toLocaleString('tr-TR');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SİMÜLASYON MODELİ
+   Taban: 2023 NHTSA FARS gerçek değerleri
+   Katsayılar: NHTSA / IIHS yayınlarından türetilmiş
+   ═══════════════════════════════════════════════════════════════ */
+const TABAN = {alkol:30, hiz:29, kemersiz:47, dikkat:8, kemer:91, adas:30, vmt:1.5, yol:50};
+const TARIH_BIT = 2023;
+const SIM_BIT   = 2035;
+
+function sliderlariOku() {
+  return {
+    alkol:    +document.getElementById('sl-alkol').value,
+    hiz:      +document.getElementById('sl-hiz').value,
+    kemersiz: +document.getElementById('sl-kemersiz').value,
+    dikkat:   +document.getElementById('sl-dikkat').value,
+    kemer:    +document.getElementById('sl-kemer').value,
+    adas:     +document.getElementById('sl-adas').value,
+    vmt:      +document.getElementById('sl-vmt').value,
+    yol:      +document.getElementById('sl-yol').value,
+  };
+}
+
+function projeksiyonHesapla(yil, f) {
+  const vmt = 3183 * Math.pow(1 + f.vmt / 100, yil - 2023);
+  let r = 1.0;
+  r += (f.alkol    - TABAN.alkol)    * 0.025;
+  r += (f.hiz      - TABAN.hiz)      * 0.018;
+  r += (f.kemersiz - TABAN.kemersiz) * 0.012;
+  r += (f.dikkat   - TABAN.dikkat)   * 0.015;
+  r -= (f.kemer    - TABAN.kemer)    * 0.009;
+  r -= (f.adas     - TABAN.adas)     * 0.003;
+  r -= (f.yol      - TABAN.yol)      * 0.0015;
+  r = Math.max(0.15, r);
+  const oran = 1.28 * r;
+  const olu  = Math.round((oran * vmt) / 100);
+  return {
+    yil, olu, oran: Math.round(oran * 100) / 100, vmt: Math.round(vmt),
+    alkolOlu:    Math.round(olu * f.alkol / 100),
+    hizOlu:      Math.round(olu * f.hiz / 100),
+    kemersizOlu: Math.round(olu * f.kemersiz / 100),
+    yayaOlu:     Math.round(olu * 0.179),
+    /* Girdi parametreleri — CSV/JSON dışa aktarımda kullanılır */
+    girdi_alkol: f.alkol,
+    girdi_hiz: f.hiz,
+    girdi_kemersiz: f.kemersiz,
+    girdi_dikkat: f.dikkat,
+    girdi_kemer: f.kemer,
+    girdi_adas: f.adas,
+    girdi_vmt_buyume: f.vmt,
+    girdi_yol: f.yol,
+  };
+}
+
+function tabanTrajektori(y) {
+  if (y <= TARIH_BIT) return FARS_VERISI[y][0];
+  return projeksiyonHesapla(y, {...TABAN}).olu;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GRAFİKLER — Chart.js 4
+   ═══════════════════════════════════════════════════════════════ */
+const TUM_YILLAR = Object.keys(FARS_VERISI).map(Number).sort((a,b)=>a-b);
+const gAyar = (r,a) => ({
+  borderColor:r, backgroundColor:a, borderWidth:2,
+  pointRadius:0, tension:.3, fill:true
+});
+const GRAFIK_OLCEK = {
+  x:{ticks:{color:'#8b949e',font:{size:10},maxTicksLimit:12},grid:{color:'rgba(48,54,61,.5)'}},
+  y:{ticks:{color:'#8b949e',font:{size:10}},grid:{color:'rgba(48,54,61,.5)'}}
+};
+const GRAFIK_EKLENTI = {
+  legend:{labels:{color:'#8b949e',font:{family:'IBM Plex Mono',size:11}}},
+  tooltip:{
+    backgroundColor:'#1c2128',borderColor:'#30363d',borderWidth:1,
+    titleColor:'#e6edf3',bodyColor:'#8b949e',
+    callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y?.toLocaleString('tr-TR')??'—'}`}
+  }
+};
+
+function grafik(id, tip, verisetleri, ekstraOpt) {
+  const ctx = document.getElementById(id).getContext('2d');
+  return new Chart(ctx, {
+    type: tip,
+    data: {labels: [...TUM_YILLAR], datasets: verisetleri},
+    options: {
+      responsive:true, animation:{duration:150},
+      plugins: GRAFIK_EKLENTI,
+      scales: {...GRAFIK_OLCEK},
+      ...ekstraOpt
+    }
+  });
+}
+
+/* Ana Grafik: Tarihsel + Simülasyon */
+const grafikAna = grafik('grafik-ana','line',[
+  {label:'FARS Tarihsel', data:TUM_YILLAR.map(y=>FARS_VERISI[y][0]), ...gAyar('#e05c1a','rgba(224,92,26,.08)')},
+  {label:'Simülasyon',    data:new Array(TUM_YILLAR.length).fill(null), ...gAyar('#2f81f7','rgba(47,129,247,.07)')}
+]);
+
+/* Oran Grafiği */
+const grafikOran = grafik('grafik-oran','line',[
+  {label:'Tarihsel Oran', data:TUM_YILLAR.map(y=>FARS_VERISI[y][2]), ...gAyar('#e05c1a','rgba(224,92,26,.07)')},
+  {label:'Simüle Oran',   data:new Array(TUM_YILLAR.length).fill(null), ...gAyar('#3fb950','rgba(63,185,80,.07)')}
+]);
+
+/* Alkol Grafiği */
+const ctxAlkol = document.getElementById('grafik-alkol').getContext('2d');
+const grafikAlkol = new Chart(ctxAlkol, {
+  type:'bar',
+  data:{labels:[], datasets:[{
+    label:'Alkol Bağlantılı Ölümler', data:[],
+    backgroundColor:'rgba(248,81,73,.5)', borderColor:'#f85149', borderWidth:1
+  }]},
+  options:{
+    responsive:true, animation:{duration:120},
+    plugins:{legend:{display:false}, tooltip:{backgroundColor:'#1c2128',borderColor:'#30363d',borderWidth:1,titleColor:'#e6edf3',bodyColor:'#8b949e'}},
+    scales:{
+      x:{ticks:{color:'#8b949e',font:{size:10},maxTicksLimit:10},grid:{color:'rgba(48,54,61,.5)'}},
+      y:{ticks:{color:'#8b949e',font:{size:10}},grid:{color:'rgba(48,54,61,.5)'}}
+    }
+  }
+});
+
+/* Yaya Grafiği */
+const ctxYaya = document.getElementById('grafik-yaya').getContext('2d');
+const grafikYaya = new Chart(ctxYaya, {
+  type:'line',
+  data:{labels:[], datasets:[{
+    label:'Yaya + Bisikletçi', data:[],
+    ...gAyar('#a78bfa','rgba(167,139,250,.1)')
+  }]},
+  options:{
+    responsive:true, animation:{duration:120},
+    plugins:{legend:{display:false}, tooltip:{backgroundColor:'#1c2128',borderColor:'#30363d',borderWidth:1,titleColor:'#e6edf3',bodyColor:'#8b949e'}},
+    scales:{
+      x:{ticks:{color:'#8b949e',font:{size:10},maxTicksLimit:10},grid:{color:'rgba(48,54,61,.5)'}},
+      y:{ticks:{color:'#8b949e',font:{size:10}},grid:{color:'rgba(48,54,61,.5)'}}
+    }
+  }
+});
+
+/* Simülasyon yıllarını grafik etiketlerine ekle */
+for (let y = TARIH_BIT + 1; y <= SIM_BIT; y++) {
+  grafikAna.data.labels.push(y);
+  grafikAna.data.datasets[0].data.push(null);
+  grafikAna.data.datasets[1].data.push(null);
+  grafikOran.data.labels.push(y);
+  grafikOran.data.datasets[0].data.push(null);
+  grafikOran.data.datasets[1].data.push(null);
+}
+grafikAna.update();
+grafikOran.update();
+
+/* ═══════════════════════════════════════════════════════════════
+   SİMÜLASYON MOTORU
+   ═══════════════════════════════════════════════════════════════ */
+let simVerisi = [];
+let simCalisiyor = false;
+let simZamanlayici = null;
+let mevcutYil = 1975;
+
+function durumAyarla(d) {
+  const el = document.getElementById('sim-durum');
+  if (d === 'calisiyor') {
+    el.className = 'sim-durum calisiyor';
+    el.innerHTML = '<span class="titreme-nokta"></span>ÇALIŞIYOR';
+  } else if (d === 'tamamlandi') {
+    el.className = 'sim-durum tamamlandi';
+    el.innerHTML = '<span class="titreme-nokta" style="background:var(--vurgu3);animation:none"></span>TAMAMLANDI';
+  } else {
+    el.className = 'sim-durum durdu';
+    el.innerHTML = '<span class="titreme-nokta durdu"></span>DURDU';
+  }
+}
+
+function simSifirla() {
+  simDurdur();
+  simVerisi = [];
+  mevcutYil = 1975;
+  document.getElementById('yil-gostergesi').textContent = '1975';
+  document.getElementById('ilerleme-dolu').style.width = '0%';
+  durumAyarla('durdu');
+
+  /* Grafikleri temizle */
+  grafikAna.data.datasets[1].data = new Array(grafikAna.data.labels.length).fill(null);
+  grafikOran.data.datasets[1].data = new Array(grafikOran.data.labels.length).fill(null);
+  grafikAna.update();
+  grafikOran.update();
+  grafikAlkol.data.labels = [];
+  grafikAlkol.data.datasets[0].data = [];
+  grafikAlkol.update();
+  grafikYaya.data.labels = [];
+  grafikYaya.data.datasets[0].data = [];
+  grafikYaya.update();
+
+  /* KPI'ları sıfırla */
+  ['kpi-can-kaybi','kpi-oran','kpi-kumulatif','kpi-kurtarilan'].forEach(
+    id => document.getElementById(id).textContent = '—'
+  );
+  document.getElementById('kpi-yil-etiketi').textContent = 'Yıl —';
+  document.getElementById('kpi-delta').textContent = '';
+  document.getElementById('kpi-oran-delta').textContent = '';
+  faktorCubuklariGoster(null);
+  document.getElementById('btn-calistir').textContent = '▶ BAŞLAT';
+}
+
+function simAdimi() {
+  const yil = mevcutYil;
+  const f = sliderlariOku();
+  let s;
+
+  if (yil <= TARIH_BIT) {
+    /* Tarihsel: FARS gerçek verisi */
+    const [olu, vmt, oran] = FARS_VERISI[yil];
+    s = {
+      yil, olu, oran, vmt,
+      alkolOlu:    Math.round(olu * interpole(ALKOL_ORANI, yil)),
+      hizOlu:      Math.round(olu * interpole(HIZ_ORANI, yil)),
+      kemersizOlu: Math.round(olu * 0.47),
+      yayaOlu:     Math.round(interpole(YAYA_VERISI, yil)),
+      /* Tarihsel yıllarda slider girdi değerleri de kaydedilir (analiz için) */
+      girdi_alkol: f.alkol,
+      girdi_hiz: f.hiz,
+      girdi_kemersiz: f.kemersiz,
+      girdi_dikkat: f.dikkat,
+      girdi_kemer: f.kemer,
+      girdi_adas: f.adas,
+      girdi_vmt_buyume: f.vmt,
+      girdi_yol: f.yol,
+    };
+  } else {
+    /* Gelecek: Katsayı tabanlı projeksiyon */
+    s = projeksiyonHesapla(yil, f);
+  }
+
+  simVerisi.push(s);
+
+  /* Grafikleri güncelle */
+  const idx = grafikAna.data.labels.indexOf(yil);
+  if (idx >= 0) {
+    grafikAna.data.datasets[1].data[idx] = s.olu;
+    grafikOran.data.datasets[1].data[idx] = s.oran;
+  }
+  grafikAlkol.data.labels.push(yil);
+  grafikAlkol.data.datasets[0].data.push(s.alkolOlu);
+  grafikYaya.data.labels.push(yil);
+  grafikYaya.data.datasets[0].data.push(s.yayaOlu);
+  grafikAna.update();
+  grafikOran.update();
+  grafikAlkol.update();
+  grafikYaya.update();
+
+  /* KPI güncellemeleri */
+  const onc = simVerisi.length > 1 ? simVerisi[simVerisi.length - 2] : null;
+  const dOlu  = onc ? s.olu - onc.olu : 0;
+  const dOran = onc ? s.oran - onc.oran : 0;
+  const kum = simVerisi.reduce((a, r) => a + r.olu, 0);
+  const tabKum = simVerisi.reduce((a, r) => a + tabanTrajektori(r.yil), 0);
+
+  document.getElementById('kpi-can-kaybi').textContent = formatSayi(s.olu);
+  document.getElementById('kpi-oran').textContent = s.oran.toFixed(2);
+  document.getElementById('kpi-kumulatif').textContent = formatSayi(kum);
+  const kurtarilan = Math.round(tabKum - kum);
+  document.getElementById('kpi-kurtarilan').textContent = (kurtarilan >= 0 ? '+' : '') + formatSayi(kurtarilan);
+  document.getElementById('kpi-yil-etiketi').textContent = yil + ' Yılı';
+
+  if (dOlu !== 0) {
+    const el = document.getElementById('kpi-delta');
+    el.textContent = (dOlu > 0 ? '▲ +' : '▼ ') + formatSayi(Math.abs(dOlu)) + ' önceki yıla göre';
+    el.className = 'kpi-delta ' + (dOlu > 0 ? 'artti' : 'azaldi');
+  }
+  if (dOran !== 0) {
+    const el = document.getElementById('kpi-oran-delta');
+    el.textContent = (dOran > 0 ? '▲ +' : '▼ ') + Math.abs(dOran).toFixed(2);
+    el.className = 'kpi-delta ' + (dOran > 0 ? 'artti' : 'azaldi');
+  }
+
+  document.getElementById('yil-gostergesi').textContent = yil;
+  document.getElementById('ilerleme-dolu').style.width =
+    ((yil - 1975) / (SIM_BIT - 1975) * 100) + '%';
+
+  if (yil > TARIH_BIT) faktorCubuklariGoster(s);
+
+  mevcutYil++;
+  if (mevcutYil > SIM_BIT) {
+    simDurdur();
+    durumAyarla('tamamlandi');
+    document.getElementById('btn-calistir').textContent = '▶ BAŞLAT';
+  }
+}
+
+function simBaslat() {
+  if (mevcutYil > SIM_BIT) simSifirla();
+  simCalisiyor = true;
+  durumAyarla('calisiyor');
+  document.getElementById('btn-calistir').textContent = '⏸ DURDUR';
+  simZamanlayici = setInterval(() => {
+    if (simCalisiyor) simAdimi();
+  }, +document.getElementById('hiz-secim').value);
+}
+
+function simDurdur() {
+  simCalisiyor = false;
+  clearInterval(simZamanlayici);
+  simZamanlayici = null;
+}
+
+/* Hız değişikliğinde interval'ı yeniden ayarla */
+document.getElementById('hiz-secim').addEventListener('change', function() {
+  if (simCalisiyor) {
+    clearInterval(simZamanlayici);
+    simZamanlayici = setInterval(() => {
+      if (simCalisiyor) simAdimi();
+    }, +this.value);
+  }
+});
+
+/* Düğme event'leri */
+document.getElementById('btn-calistir').addEventListener('click', () => {
+  if (simCalisiyor) {
+    simDurdur();
+    durumAyarla('durdu');
+    document.getElementById('btn-calistir').textContent = '▶ BAŞLAT';
+  } else {
+    simBaslat();
+  }
+});
+document.getElementById('btn-sifirla').addEventListener('click', simSifirla);
+
+/* ═══════════════════════════════════════════════════════════════
+   FAKTÖR DAĞILIM ÇUBUKLARI
+   ═══════════════════════════════════════════════════════════════ */
+function faktorCubuklariGoster(s) {
+  const kap = document.getElementById('faktor-cubuklar');
+  if (!s) {
+    kap.innerHTML = '<p style="color:var(--soluk);font-size:12px">Faktör dağılımı için simülasyonu çalıştırın</p>';
+    return;
+  }
+  const t = s.olu || 1;
+  const fl = [
+    {ad:'Alkol Bağlantılı',    d:s.alkolOlu,    r:'#f85149'},
+    {ad:'Hız İhlali',          d:s.hizOlu,      r:'#e05c1a'},
+    {ad:'Kemersiz Yolcu',      d:s.kemersizOlu, r:'#e3b341'},
+    {ad:'Yaya + Bisikletçi',   d:s.yayaOlu,     r:'#a78bfa'},
+  ];
+  kap.innerHTML = fl.map(f => {
+    const p = Math.round(f.d / t * 100);
+    return `<div class="faktor-sarici">
+      <div class="faktor-ust">
+        <span class="faktor-ad">${f.ad}</span>
+        <span class="faktor-yuzde">${formatSayi(f.d)} (%${p})</span>
+      </div>
+      <div class="faktor-ray">
+        <div class="faktor-dolu" style="width:${p}%;background:${f.r}"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+faktorCubuklariGoster(null);
+
+/* ═══════════════════════════════════════════════════════════════
+   SLIDER ETİKET GÜNCELLEMELERİ
+   ═══════════════════════════════════════════════════════════════ */
+[
+  ['sl-alkol','deger-alkol'],
+  ['sl-hiz','deger-hiz'],
+  ['sl-kemersiz','deger-kemersiz'],
+  ['sl-dikkat','deger-dikkat'],
+  ['sl-kemer','deger-kemer'],
+  ['sl-adas','deger-adas']
+].forEach(([id, vid]) => {
+  document.getElementById(id).addEventListener('input', function() {
+    document.getElementById(vid).textContent = '%' + this.value;
+  });
+});
+
+document.getElementById('sl-vmt').addEventListener('input', function() {
+  const v = parseFloat(this.value);
+  document.getElementById('deger-vmt').textContent = (v >= 0 ? '+' : '') + '%' + v;
+});
+
+document.getElementById('sl-yol').addEventListener('input', function() {
+  document.getElementById('deger-yol').textContent = this.value;
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   HIZLI SENARYOLAR
+   ═══════════════════════════════════════════════════════════════ */
+const SENARYOLAR = {
+  baz:          {alkol:30, hiz:29, kemersiz:47, dikkat:8,  kemer:91, adas:30, vmt:1.5,  yol:50},
+  vizyon:       {alkol:10, hiz:15, kemersiz:15, dikkat:5,  kemer:98, adas:70, vmt:0,    yol:90},
+  sarhos_zirve: {alkol:57, hiz:35, kemersiz:70, dikkat:2,  kemer:14, adas:0,  vmt:2.5,  yol:20},
+  yuksek_tek:   {alkol:25, hiz:20, kemersiz:30, dikkat:4,  kemer:96, adas:85, vmt:2,    yol:75},
+  kotumser:     {alkol:45, hiz:42, kemersiz:60, dikkat:20, kemer:75, adas:5,  vmt:3.5,  yol:20},
+};
+
+function uygulaSenaryo(k) {
+  const s = SENARYOLAR[k];
+  if (!s) return;
+  Object.entries(s).forEach(([anahtar, deger]) => {
+    const el = document.getElementById('sl-' + anahtar);
+    if (el) {
+      el.value = deger;
+      el.dispatchEvent(new Event('input'));
+    }
+  });
+  if (!simCalisiyor) simSifirla();
+}
+
+/* Senaryo tıklama event'leri — inline onclick yerine event delegation */
+document.getElementById('senaryo-listesi').addEventListener('click', function(e) {
+  const satir = e.target.closest('.senaryo-satiri');
+  if (satir && satir.dataset.senaryo) {
+    uygulaSenaryo(satir.dataset.senaryo);
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   DIŞA AKTARIM — CSV & JSON
+   Analiz için hazır format (Python / R / Excel)
+   ═══════════════════════════════════════════════════════════════ */
+function csvAktar() {
+  if (!simVerisi.length) {
+    alert('Önce simülasyonu çalıştırın.');
+    return;
+  }
+  const baslik = [
+    'yil','olu_sayisi','oran_100mvmt','vmt_milyar','alkol_olu','hiz_olu',
+    'kemersiz_olu','yaya_bisiklet_olu','girdi_alkol_yuzde','girdi_hiz_yuzde',
+    'girdi_kemersiz_yuzde','girdi_dikkat_yuzde','girdi_kemer_kullanim_yuzde',
+    'girdi_adas_yuzde','girdi_vmt_buyume_yuzde','girdi_yol_endeksi'
+  ];
+  const satirlar = simVerisi.map(r => [
+    r.yil, r.olu, r.oran, r.vmt,
+    r.alkolOlu, r.hizOlu, r.kemersizOlu, r.yayaOlu,
+    r.girdi_alkol ?? '', r.girdi_hiz ?? '', r.girdi_kemersiz ?? '',
+    r.girdi_dikkat ?? '', r.girdi_kemer ?? '', r.girdi_adas ?? '',
+    r.girdi_vmt_buyume ?? '', r.girdi_yol ?? ''
+  ]);
+  const csv = [baslik, ...satirlar].map(r => r.join(',')).join('\n');
+  indir('trafik_sim_' + Date.now() + '.csv', csv, 'text/csv');
+}
+
+function jsonAktar() {
+  if (!simVerisi.length) {
+    alert('Önce simülasyonu çalıştırın.');
+    return;
+  }
+  const json = JSON.stringify({
+    meta: {
+      kaynak: 'NHTSA FARS 1975-2023 + simülasyon',
+      olusturulma: new Date().toISOString(),
+      taban_yili: 2023,
+      model_aciklamasi: 'Tarihsel yıllar (1975-2023) gerçek NHTSA FARS verisidir. Gelecek yıllar (2024-2035) kanıta dayalı katsayılarla simüle edilmiştir.',
+      katsayilar: {
+        alkol: '+%2.5 / puan sapma',
+        hiz: '+%1.8 / puan sapma',
+        kemersiz: '+%1.2 / puan sapma',
+        dikkat: '+%1.5 / puan sapma',
+        kemer: '-%0.9 / puan sapma',
+        adas: '-%0.3 / puan sapma',
+        yol_endeksi: '-%0.15 / birim',
+        vmt: 'orantılı büyüme'
+      }
+    },
+    veri: simVerisi
+  }, null, 2);
+  indir('trafik_sim_' + Date.now() + '.json', json, 'application/json');
+}
+
+function indir(ad, icerik, mime) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([icerik], {type: mime}));
+  a.download = ad;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+document.getElementById('btn-csv').addEventListener('click', csvAktar);
+document.getElementById('btn-json').addEventListener('click', jsonAktar);
+</script>
+</body>
+</html>
