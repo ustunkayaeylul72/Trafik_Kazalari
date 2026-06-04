@@ -135,7 +135,7 @@ p3.add_run(
 )
 doc.add_paragraph("Eğer herkes emniyet kemerini takarsa, ölümler şak diye azalıyor.", style='List Bullet')
 doc.add_paragraph("Eğer arabalara kendi kendine fren yapan akıllı sistemler (ADAS) koyarsak, arabalar çarpışmadan durabiliyor!", style='List Bullet')
-doc.add_paragraph("Eğer herkes kurallara uysa ('Vision Zero' dediğimiz harika durum), gelecekteki kötü senaryolara göre binlerce insanın hayatını kurtarabiliyoruz. Mesela 1980 yılındaki gibi kuralsız olsaydık ölümler 110 binlere fırlardı, ama teknolojiyle bunu önlüyoruz.", style='List Bullet')
+doc.add_paragraph("Eğer herkes kurallara uysa ('Vision Zero' dediğimiz harika durum), gelecekteki kötü senaryolara göre binlerce insanın hayatını kurtarabiliyoruz. Mesela 1980 yılındaki gibi kuralsız olsaydık ölümler 153.259 seviyesine fırlardı, ama teknolojiyle bunu önlüyoruz.", style='List Bullet')
 
 doc.add_picture(grafik1_yol, width=Inches(6.0))
 doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
