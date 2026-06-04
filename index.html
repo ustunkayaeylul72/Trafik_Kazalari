@@ -476,7 +476,7 @@ function projeksiyonHesapla(yil, f) {
   r -= (f.yol      - TABAN.yol)      * 0.0015;
   r = Math.max(0.15, r);
   const oran = 1.28 * r;
-  const olu  = Math.round((oran * vmt) / 100);
+  const olu  = Math.round(oran * vmt * 10);
   return {
     yil, olu, oran: Math.round(oran * 100) / 100, vmt: Math.round(vmt),
     alkolOlu:    Math.round(olu * f.alkol / 100),
